@@ -34,10 +34,10 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const pad = (n) => String(n).padStart(2,"0");
   const isoToday = () => {const d = new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());};
-  const validISO = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(s+"T12:00:00"));
+  const validISO = (s) => {if(typeof s!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false; const d=new Date(s+"T12:00:00");return Number.isFinite(d.getTime()) && d.getFullYear()===Number(s.slice(0,4))&&d.getMonth()+1===Number(s.slice(5,7))&&d.getDate()===Number(s.slice(8,10));};
   const addDays = (iso, days) => {const [y,m,d] = iso.split("-").map(Number);const value = new Date(y,m-1,d+days,12);return value.getFullYear()+"-"+pad(value.getMonth()+1)+"-"+pad(value.getDate());};
   const diffDays = (start, end) => Math.round((Date.parse(end+"T12:00:00")-Date.parse(start+"T12:00:00"))/86400000);
-  const dateLabel = (iso) => iso ? new Date(iso+"T12:00:00").toLocaleDateString("ar-SA",{day:"numeric",month:"short",year:"numeric"}) : "—";
+  const dateLabel = (iso) => iso ? new Date(iso+"T12:00:00").toLocaleDateString("ar-SA-u-ca-gregory",{day:"numeric",month:"short",year:"numeric"}) : "—";
   const pageStart = (id) => (id - 1) * BLOCK_PAGES + 1;
   const pageEnd = (id) => Math.min(id * BLOCK_PAGES, TOTAL_PAGES);
   const pageCount = (id) => pageEnd(id) - pageStart(id) + 1;
@@ -75,7 +75,7 @@
     return data.entries[id];
   }
   function nameOf(id) {return (data.custom[id] && data.custom[id].name) || NAMES[id-1];}
-  function questionOf(id) {return (data.custom[id] && data.custom[id].question) || defaultQuestion(id);}
+  function questionOf(id) {return data.custom[id] && Object.prototype.hasOwnProperty.call(data.custom[id],"question") ? data.custom[id].question : defaultQuestion(id);}
   function readPages() {let x=0;for(let i=1;i<=TOTAL_STATIONS;i++)if(entry(i).read)x+=pageCount(i);return x;}
   function memorizedPages() {let x=0;for(let i=1;i<=TOTAL_STATIONS;i++)if(entry(i).status>=1)x+=pageCount(i);return x;}
   function masteredPages() {let x=0;for(let i=1;i<=TOTAL_STATIONS;i++)if(entry(i).status===3)x+=pageCount(i);return x;}
@@ -167,7 +167,7 @@
     return '<div class="page-heading"><div class="button-row">'+button("← فهرس المحطات","openStations","button-outline")+'<span class="chip">المحطة '+arabicNum(id)+' / ٨٧</span></div></div>'+
       '<div class="grid-2"><div class="stack"><div class="card"><div class="detail-head"><div><div class="kicker">المحطة '+arabicNum(id)+' · اليوم '+arabicNum(id)+' من الخطة</div><h2>'+esc(nameOf(id))+'</h2><span class="subtle">'+rangeLabel(id)+' · '+arabicNum(pageCount(id))+' '+(pageCount(id)===2?"صفحتان":"صفحات")+'</span></div><div class="station-number">'+arabicNum(id)+'</div></div><div class="button-row" style="margin-top:18px">'+button("تغيير الاسم والسؤال","edit:"+id,"button-quiet")+'<a class="button button-outline" href="'+external+'" target="_blank" rel="noopener noreferrer">فتح أول صفحة ↗</a><a class="button button-outline" href="'+endExternal+'" target="_blank" rel="noopener noreferrer">آخر صفحة ↗</a></div><p class="hint" style="margin:13px 0 0">فتح المصحف عبر Quran.com يحتاج إلى اتصال بالإنترنت. سجلات الحفظ تعمل محليًا دون إنترنت.</p></div>'+
       '<div class="card"><h2 class="section-title">تقييم المحطة</h2><label class="check-row"><input type="checkbox" data-read="'+id+'" '+(e.read?"checked":"")+'> قرأت صفحات المحطة</label><div class="divider"></div><div class="label" style="margin-bottom:10px">مرحلة الحفظ والتسميع والإتقان</div><div class="step-grid">'+steps+'</div><p class="hint" style="margin:13px 0 0">اختر المرحلة التي أنجزتها فعليًا؛ يمكن تعديلها لاحقًا دون فقد ملاحظاتك.</p></div></div>'+
-      '<div class="stack"><div class="card"><h2 class="section-title">مفتاح التذكر</h2><div class="detail-text question"><div class="label">سؤال تدبر اختياري</div><p>'+esc(questionOf(id))+'</p></div><label class="field-label" for="stationNotes">ملاحظاتي على الحفظ والمواضع المتشابهة</label><textarea id="stationNotes" class="mini-notes" rows="5" maxlength="3000" placeholder="مثال: بداية الصفحة الرابعة، أو آية تتشابه مع موضع سابق...">'+esc(e.note)+'</textarea>'+button("حفظ الملاحظة","saveNotes:"+id,"button-primary")+'</div>'+
+      '<div class="stack"><div class="card"><h2 class="section-title">مفتاح التذكر</h2><div class="detail-text question"><div class="label">سؤال تدبر اختياري</div><p>'+esc(questionOf(id) || "سؤال التدبر معطّل لهذه المحطة. يمكنك إضافته من زر تخصيص المحطة.")+'</p></div><label class="field-label" for="stationNotes">ملاحظاتي على الحفظ والمواضع المتشابهة</label><textarea id="stationNotes" class="mini-notes" rows="5" maxlength="3000" placeholder="مثال: بداية الصفحة الرابعة، أو آية تتشابه مع موضع سابق...">'+esc(e.note)+'</textarea>'+button("حفظ الملاحظة","saveNotes:"+id,"button-primary")+'</div>'+
       '<div class="card"><h2 class="section-title">المراجعة المتباعدة</h2>'+revHTML+'</div><div class="card"><div class="title-row"><h2 class="section-title">التنقل</h2><span class="chip gold">'+arabicNum(Math.round(id/TOTAL_STATIONS*100))+'٪ من ترتيب المصحف</span></div><div class="button-row">'+prev+next+'</div></div></div></div>';
   }
   function reviews(){
@@ -228,11 +228,11 @@
     let h=Number(data.calendarTime.slice(0,2)),m=Number(data.calendarTime.slice(3,5));const endH=pad((h+Math.floor((m+30)/60))%24),endM=pad((m+30)%60);
     let lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Quran Stations//AR","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:المحطات القرآنية"];
     for(let i=1;i<=TOTAL_DAYS;i++){
-      const date=addDays(data.startOn,i-1).replaceAll("-","");
+      const eventDate=addDays(data.startOn,i-1),date=eventDate.replaceAll("-"),endDate=addDays(eventDate,h===23&&m>=30?1:0).replaceAll("-");
       const title=i<=TOTAL_STATIONS?"محطة "+arabicNum(i)+" - "+nameOf(i):"مراجعة شاملة - اليوم "+arabicNum(i-TOTAL_STATIONS);
       const detail=i<=TOTAL_STATIONS?rangeLabel(i)+" - حفظ وتسميع وإتقان":"مراجعة الجزء "+arabicNum(i-TOTAL_STATIONS)+" من ٣";
       lines.push("BEGIN:VEVENT","UID:quran-station-"+i+"-"+data.startOn+"@quran-stations","DTSTAMP:"+isoToday().replaceAll("-","")+"T090000Z",
-        "DTSTART:"+date+"T"+time,"DTEND:"+date+"T"+endH+endM+"00","SUMMARY:"+text(title),"DESCRIPTION:"+text(detail),
+        "DTSTART:"+date+"T"+time,"DTEND:"+endDate+"T"+endH+endM+"00","SUMMARY:"+text(title),"DESCRIPTION:"+text(detail),
         "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+text(title),"TRIGGER:-PT30M","END:VALARM","END:VEVENT");
     }
     lines.push("END:VCALENDAR");
