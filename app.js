@@ -2,31 +2,10 @@
 (function () {
   const KEY = "quran-stations-v1";
   const TOTAL_PAGES = 604, BLOCK_PAGES = 7, TOTAL_STATIONS = 87, TOTAL_DAYS = 90;
-  const NAMES = [
-    "الإضاءة","الميثاق","البصيرة","التحول","الاعتدال","السكينة","الأمانة","الثبات","البرهان","الاعتصام",
-    "اليقظة","العدل","القسط","النصرة","الحقوق","الوفاء","الاستقامة","الشهادة","التوحيد","اليقين",
-    "الفطرة","التبصر","الميزان","الصبر","العبرة","الإنذار","الفرقان","المفاصلة","الصدق","الرجاء",
-    "التدبير","التوكل","الاستجابة","الرؤيا","المحنة","التمكين","الشجرة الطيبة","الحفظ","النعم","الشكر",
-    "الإحسان","المسير","الابتلاء","الرحمة","الدعاء","التذكير","الرسالة","التعظيم","الخشوع","الفلاح",
-    "الطهر","الحياء","عباد الرحمن","الدعوة","الحكمة","النجاة","المراقبة","الاختبار","الآيات","الوصية",
-    "القدوة","العطاء","الإحياء","البعث","الاصطفاء","الإخلاص","الإنابة","المغفرة","الثبات على الحق","الشورى",
-    "زينة زائلة","الحساب","المواجهة","الأخوة","العودة","الآلاء","المآل","النجوى","الصفاء","التقوى",
-    "الملك","النداء","الاستعداد","الخبر العظيم","المصير","الموازين","التحصين"
-  ];
-  const QUESTIONS = [
-    "ما الآية التي تختصر المعنى الأبرز في هذه الصفحات؟",
-    "ما التسلسل الذي يساعدك على تذكر أول الصفحة ووسطها وآخرها؟",
-    "ما العلاقة بين بداية هذه المحطة ونهايتها؟",
-    "ما الكلمات المفتاحية التي تعينك على استرجاع مواضع الآيات؟",
-    "أي موضع قد يلتبس عليك بموضع مشابه؟ وكيف تميّز بينهما؟",
-    "كيف تشرح المعنى العام لهذه الصفحات في ثلاث جمل؟",
-    "ما الآية التي تحتاج إلى تدبر أعمق قبل تثبيت حفظها؟",
-    "ما أبرز انتقال في الموضوع بين صفحات هذه المحطة؟",
-    "لو سمّعت هذه الصفحات دون مصحف، ما المواضع التي تتوقع أن تتعثر فيها؟",
-    "ما أول كلمة في كل صفحة؟ وهل تحفظ ترتيب بداياتها؟",
-    "ما المعاني المتكررة التي تعينك على ربط المقاطع؟",
-    "ما السؤال الذي يمكن أن تسأله لنفسك لقياس فهم هذه الصفحات؟"
-  ];
+  const THEMES = Array.isArray(window.QURAN_STATIONS_THEMES) ? window.QURAN_STATIONS_THEMES : [];
+  if (THEMES.length !== TOTAL_STATIONS) throw new Error("تعذر تحميل أسماء المحطات وأسباب تسميتها");
+  const NAMES = THEMES.map(theme => theme.name);
+  const SURAH_NAMES = Array.isArray(window.QURAN_SURAH_NAMES) ? window.QURAN_SURAH_NAMES : [];
   const REVIEW_LABELS = ["بعد يوم","بعد أسبوع","بعد شهر","مراجعة شهرية"];
   const $ = (selector) => document.querySelector(selector);
   const app = $("#app");
@@ -42,7 +21,13 @@
   const pageEnd = (id) => Math.min(id * BLOCK_PAGES, TOTAL_PAGES);
   const pageCount = (id) => pageEnd(id) - pageStart(id) + 1;
   const rangeLabel = (id) => "ص " + arabicNum(pageStart(id)) + "–" + arabicNum(pageEnd(id));
-  const defaultQuestion = (id) => QUESTIONS[(id-1)%QUESTIONS.length];
+  const defaultQuestion = (id) => THEMES[id-1].question;
+  const defaultReason = (id) => THEMES[id-1].reason;
+  const anchorOf = (id) => THEMES[id-1].anchor;
+  const anchorLabel = (id) => {
+    const [surah,ayah] = anchorOf(id).split(":").map(Number);
+    return (SURAH_NAMES[surah-1] || "السورة "+arabicNum(surah)) + "، الآية " + arabicNum(ayah);
+  };
   const defaultData = () => ({version:1,startOn:"",calendarTime:"17:00",theme:"light",custom:{},entries:{}});
   function cleanData(input) {
     if (!input || typeof input !== "object" || !Array.isArray(NAMES) || NAMES.length !== TOTAL_STATIONS) throw Error("تعذر التحقق من البيانات");
@@ -53,7 +38,7 @@
     if (input.custom && typeof input.custom === "object") {
       for (let i=1;i<=TOTAL_STATIONS;i++) {
         const c = input.custom[i];
-        if (c && typeof c === "object") obj.custom[i] = {name:typeof c.name==="string" ? c.name.slice(0,75) : "",question:typeof c.question==="string" ? c.question.slice(0,350) : ""};
+        if (c && typeof c === "object") obj.custom[i] = {name:typeof c.name==="string" ? c.name.slice(0,75) : "",question:typeof c.question==="string" ? c.question.slice(0,350) : "",reason:typeof c.reason==="string" ? c.reason.slice(0,700) : ""};
       }
     }
     if (input.entries && typeof input.entries === "object") {
@@ -75,6 +60,9 @@
     return data.entries[id];
   }
   function nameOf(id) {return (data.custom[id] && data.custom[id].name) || NAMES[id-1];}
+  function userChangedName(id) {return nameOf(id) !== NAMES[id-1];}
+  function personalReason(id) {return (data.custom[id] && data.custom[id].reason) || "";}
+  function reasonOf(id) {return personalReason(id) || defaultReason(id);}
   function questionOf(id) {return data.custom[id] && Object.prototype.hasOwnProperty.call(data.custom[id],"question") ? data.custom[id].question : defaultQuestion(id);}
   function readPages() {let x=0;for(let i=1;i<=TOTAL_STATIONS;i++)if(entry(i).read)x+=pageCount(i);return x;}
   function memorizedPages() {let x=0;for(let i=1;i<=TOTAL_STATIONS;i++)if(entry(i).status>=1)x+=pageCount(i);return x;}
@@ -165,9 +153,11 @@
     const steps=[["0","لم أبدأ"],["1","حفظت"],["2","سمّعت"],["3","أتقنت"]].map((it)=>'<button type="button" data-action="status:'+id+':'+it[0]+'" aria-pressed="'+(e.status===Number(it[0])?"true":"false")+'" class="step '+(e.status===Number(it[0])?"active":"")+'">'+it[1]+'</button>').join("");
     const revHTML=e.status===3?'<div class="list-row"><div><strong>المراجعة القادمة: '+dateLabel(rev.due)+'</strong><span class="small subtle">'+rev.next+' · أُنجز '+arabicNum(rev.count)+' مراجعات</span></div>'+button("تمت المراجعة","review:"+id,"button-primary")+'</div>':'<p class="small subtle">سيتفعل جدول مراجعة بعد يوم ثم أسبوع ثم شهر عندما تسجل «أتقنت».</p>';
     return '<div class="page-heading"><div class="button-row">'+button("← فهرس المحطات","openStations","button-outline")+'<span class="chip">المحطة '+arabicNum(id)+' / ٨٧</span></div></div>'+
-      '<div class="grid-2"><div class="stack"><div class="card"><div class="detail-head"><div><div class="kicker">المحطة '+arabicNum(id)+' · اليوم '+arabicNum(id)+' من الخطة</div><h2>'+esc(nameOf(id))+'</h2><span class="subtle">'+rangeLabel(id)+' · '+arabicNum(pageCount(id))+' '+(pageCount(id)===2?"صفحتان":"صفحات")+'</span></div><div class="station-number">'+arabicNum(id)+'</div></div><div class="button-row" style="margin-top:18px">'+button("تغيير الاسم والسؤال","edit:"+id,"button-quiet")+'<a class="button button-outline" href="'+external+'" target="_blank" rel="noopener noreferrer">فتح أول صفحة ↗</a><a class="button button-outline" href="'+endExternal+'" target="_blank" rel="noopener noreferrer">آخر صفحة ↗</a></div><p class="hint" style="margin:13px 0 0">فتح المصحف عبر Quran.com يحتاج إلى اتصال بالإنترنت. سجلات الحفظ تعمل محليًا دون إنترنت.</p></div>'+
+      '<div class="grid-2"><div class="stack"><div class="card"><div class="detail-head"><div><div class="kicker">المحطة '+arabicNum(id)+' · اليوم '+arabicNum(id)+' من الخطة</div><h2>'+esc(nameOf(id))+'</h2><span class="subtle">'+rangeLabel(id)+' · '+arabicNum(pageCount(id))+' '+(pageCount(id)===2?"صفحتان":"صفحات")+'</span></div><div class="station-number">'+arabicNum(id)+'</div></div><div class="button-row" style="margin-top:18px">'+button("تعديل الاسم وسبب التسمية","edit:"+id,"button-quiet")+'<a class="button button-outline" href="'+external+'" target="_blank" rel="noopener noreferrer">فتح أول صفحة ↗</a><a class="button button-outline" href="'+endExternal+'" target="_blank" rel="noopener noreferrer">آخر صفحة ↗</a></div><p class="hint" style="margin:13px 0 0">فتح المصحف عبر Quran.com يحتاج إلى اتصال بالإنترنت. سجلات الحفظ تعمل محليًا دون إنترنت.</p></div>'+
       '<div class="card"><h2 class="section-title">تقييم المحطة</h2><label class="check-row"><input type="checkbox" data-read="'+id+'" '+(e.read?"checked":"")+'> قرأت صفحات المحطة</label><div class="divider"></div><div class="label" style="margin-bottom:10px">مرحلة الحفظ والتسميع والإتقان</div><div class="step-grid">'+steps+'</div><p class="hint" style="margin:13px 0 0">اختر المرحلة التي أنجزتها فعليًا؛ يمكن تعديلها لاحقًا دون فقد ملاحظاتك.</p></div></div>'+
-      '<div class="stack"><div class="card"><h2 class="section-title">مفتاح التذكر</h2><div class="detail-text question"><div class="label">سؤال تدبر اختياري</div><p>'+esc(questionOf(id) || "سؤال التدبر معطّل لهذه المحطة. يمكنك إضافته من زر تخصيص المحطة.")+'</p></div><label class="field-label" for="stationNotes">ملاحظاتي على الحفظ والمواضع المتشابهة</label><textarea id="stationNotes" class="mini-notes" rows="5" maxlength="3000" placeholder="مثال: بداية الصفحة الرابعة، أو آية تتشابه مع موضع سابق...">'+esc(e.note)+'</textarea>'+button("حفظ الملاحظة","saveNotes:"+id,"button-primary")+'</div>'+
+      '<div class="stack"><div class="card"><h2 class="section-title">مفتاح التذكر والتدبر</h2>'+
+      '<div class="detail-text"><div class="label">'+(personalReason(id)?"سبب اختياري لاسم المحطة":userChangedName(id)?"سبب الاسم المقترح «"+esc(NAMES[id-1])+"»":"لماذا اخترت اسم «"+esc(NAMES[id-1])+"»؟")+'</div><p>'+esc(reasonOf(id))+'</p><a class="verse-source" href="https://quran.com/ar/'+esc(anchorOf(id).replace(":","/"))+'" target="_blank" rel="noopener noreferrer">الآية المرجعية: '+esc(anchorLabel(id))+' ↗</a>'+(userChangedName(id)&&!personalReason(id)?'<p class="hint">غيّرت اسم المحطة. هذا التفسير يخص الاسم المقترح، ويمكنك كتابة سبب اسمك من زر «تعديل الاسم وسبب التسمية».</p>':'')+'</div>'+
+      '<div class="detail-text question"><div class="label">سؤال تدبر يساعد على الحفظ</div><p>'+esc(questionOf(id) || "سؤال التدبر معطّل لهذه المحطة. يمكنك إضافته من زر تخصيص المحطة.")+'</p><p class="hint">ملاحظة: اخترت عنوان المحطة لتذكّر المعنى الموضح أعلاه، وليس ليكون اسمًا بديلًا للسورة. قد تضم الصفحات موضوعات أخرى.</p></div><label class="field-label" for="stationNotes">ملاحظاتي على الحفظ والمواضع المتشابهة</label><textarea id="stationNotes" class="mini-notes" rows="5" maxlength="3000" placeholder="مثال: بداية الصفحة الرابعة، أو آية تتشابه مع موضع سابق...">'+esc(e.note)+'</textarea>'+button("حفظ الملاحظة","saveNotes:"+id,"button-primary")+'</div>'+
       '<div class="card"><h2 class="section-title">المراجعة المتباعدة</h2>'+revHTML+'</div><div class="card"><div class="title-row"><h2 class="section-title">التنقل</h2><span class="chip gold">'+arabicNum(Math.round(id/TOTAL_STATIONS*100))+'٪ من ترتيب المصحف</span></div><div class="button-row">'+prev+next+'</div></div></div></div>';
   }
   function reviews(){
@@ -213,7 +203,7 @@
     e.reviews.push(isoToday());save();render();notify("تم تسجيل المراجعة التالية.");
   }
   function openEditor(id){
-    editingId=id;$("#stationName").value=nameOf(id);$("#stationQuestion").value=questionOf(id);
+    editingId=id;$("#stationName").value=nameOf(id);$("#stationQuestion").value=questionOf(id);$("#stationReason").value=personalReason(id);
     const dialog=$("#editDialog");if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");
     $("#stationName").focus();
   }
@@ -260,7 +250,7 @@
     if(action==="openReviews"){go("reviews");return;}
     if(action==="print"){window.print();return;}
     if(action==="closeEditor"){closeEditor();return;}
-    if(action==="restoreDefault"){$("#stationName").value=NAMES[editingId-1];$("#stationQuestion").value=defaultQuestion(editingId);return;}
+    if(action==="restoreDefault"){$("#stationName").value=NAMES[editingId-1];$("#stationQuestion").value=defaultQuestion(editingId);$("#stationReason").value="";return;}
     if(action==="export"){download("quran-stations-backup-"+isoToday()+".json",JSON.stringify(data,null,2),"application/json;charset=utf-8");notify("تم تنزيل النسخة الاحتياطية.");return;}
     if(action==="calendar"){calendar();return;}
     if(action==="saveTime"){const time=$("#calendarTime").value;if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))return notify("الوقت غير صالح.");data.calendarTime=time;save();notify("تم تحديث وقت التقويم.");return;}
@@ -285,9 +275,9 @@
   });
   document.addEventListener("submit",function(e){
     if(e.target.id==="editForm"){
-      e.preventDefault();const name=$("#stationName").value.trim(),question=$("#stationQuestion").value.trim();
+      e.preventDefault();const name=$("#stationName").value.trim(),question=$("#stationQuestion").value.trim(),reason=$("#stationReason").value.trim();
       if(!name){notify("أدخل اسم المحطة.");return;}
-      data.custom[editingId]={name,question};save();closeEditor();render();notify("تم حفظ الاسم وسؤال التدبر.");return;
+      data.custom[editingId]={name,question,reason};save();closeEditor();render();notify("تم حفظ الاسم وسبب التسمية وسؤال التدبر.");return;
     }
     if(e.target.id==="dateForm"){
       e.preventDefault();const value=$("#startDate").value;
