@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123e35">
+<meta name="description" content="المحطات القرآنية: خطة شخصية للحفظ والتسميع والإتقان في 90 يومًا، مع متابعة المراجعة والنسخ الاحتياطي.">
+<meta name="color-scheme" content="light dark">
+<title>المحطات القرآنية | رحلة الحفظ</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./style.css">
+<script defer src="./app.js"></script>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="brand-mark" aria-hidden="true"><span>۞</span></div>
+  <div class="brand">
+    <span class="eyebrow">رحلة الحفظ والتثبيت</span>
+    <strong>المحطات القرآنية</strong>
+  </div>
+  <button id="themeButton" class="icon-button theme-toggle" type="button" data-action="theme" aria-label="تغيير المظهر">☾</button>
+</header>
+<div class="content" id="app" tabindex="-1">
+  <noscript>يحتاج هذا التطبيق إلى تفعيل JavaScript لعرض المحطات وحفظ تقدمك.</noscript>
+</div>
+<nav class="bottom-nav" aria-label="أقسام التطبيق">
+  <button class="nav-button" data-view="home" type="button"><span class="nav-symbol">⌂</span><span>الرئيسية</span></button>
+  <button class="nav-button" data-view="stations" type="button"><span class="nav-symbol">▦</span><span>المحطات</span></button>
+  <button class="nav-button" data-view="reviews" type="button"><span class="nav-symbol">◷</span><span>المراجعات</span></button>
+  <button class="nav-button" data-view="settings" type="button"><span class="nav-symbol">⚙</span><span>الإعدادات</span></button>
+</nav>
+<footer class="footer-note">«خيركم من تعلم القرآن وعلمه» · أسماء المحطات للتنظيم والتدبر وليست أسماء للسور.</footer>
+</div>
+<dialog id="editDialog" class="dialog">
+ <form id="editForm">
+  <div class="dialog-head"><h2>تخصيص المحطة</h2><button class="ghost-button" type="button" data-action="closeEditor" aria-label="إغلاق">✕</button></div>
+  <label class="field-label" for="stationName">اسم المحطة</label>
+  <input id="stationName" name="stationName" maxlength="75" required autocomplete="off" placeholder="اسم يعينك على تذكر المحطة">
+  <label class="field-label" for="stationQuestion">سؤال التدبر (اختياري)</label>
+  <textarea id="stationQuestion" name="stationQuestion" maxlength="350" rows="3" placeholder="سؤال قصير يساعد على استحضار المعاني"></textarea>
+  <div class="dialog-buttons"><button type="button" class="button button-quiet" data-action="restoreDefault">استعادة الاسم المقترح</button><button class="button button-primary" type="submit">حفظ التعديل</button></div>
+ </form>
+</dialog>
+<div id="toast" class="toast" aria-live="polite" role="status"></div>
+</body>
+</html>
