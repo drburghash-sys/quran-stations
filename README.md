@@ -18,7 +18,7 @@ HTML + CSS + JavaScript دون خدمات خارجية أو تسجيل حساب.
 
 ## التشغيل والنشر
 - محليًا: افتح `index.html` في المتصفح؛ قد لا يعمل عامل الخدمة على `file://`، لكن متابعة المحطات تعمل.
-- GitHub Pages: من Settings → Pages اختر GitHub Actions (إذا كان هناك workflow)، أو اختر Deploy from a branch → main → /(root).
+- GitHub Pages: افتح Settings → Pages → Build and deployment → Source: **Deploy from a branch** → Branch: **main** → Folder: **/(root)** → Save. يجب تفعيل ذلك مرة واحدة من إعدادات GitHub؛ لا يمتلك تكامل التطبيق إذن تفعيل Pages نيابة عن مالك المستودع.
 - المسار المعتاد بعد التفعيل: https://drburghash-sys.github.io/quran-stations/
 - يمكن إضافته لشاشة الهاتف الرئيسية من قائمة المتصفح بعد تفعيل GitHub Pages.
 
