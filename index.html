@@ -10,6 +10,7 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="stylesheet" href="./style.css">
+<script defer src="./themes.js"></script>
 <script defer src="./app.js"></script>
 </head>
 <body>
@@ -38,6 +39,9 @@
   <div class="dialog-head"><h2>تخصيص المحطة</h2><button class="ghost-button" type="button" data-action="closeEditor" aria-label="إغلاق">✕</button></div>
   <label class="field-label" for="stationName">اسم المحطة</label>
   <input id="stationName" name="stationName" maxlength="75" required autocomplete="off" placeholder="اسم يعينك على تذكر المحطة">
+  <label class="field-label" for="stationReason">سبب اختياري للاسم (اختياري)</label>
+  <textarea id="stationReason" name="stationReason" maxlength="700" rows="4" placeholder="إذا أعجبتك التسمية المقترحة فاترك هذا الحقل فارغًا لعرض سببها. وإذا غيّرت الاسم، فاكتب لماذا اخترت الاسم الجديد."></textarea>
+  <p class="hint">سيظل سبب التسمية المقترحة والآية المرجعية متاحين في بيانات التطبيق. لا يؤدي تعديل الاسم إلى تعديل الحفظ أو التسميع.</p>
   <label class="field-label" for="stationQuestion">سؤال التدبر (اختياري)</label>
   <textarea id="stationQuestion" name="stationQuestion" maxlength="350" rows="3" placeholder="سؤال قصير يساعد على استحضار المعاني"></textarea>
   <div class="dialog-buttons"><button type="button" class="button button-quiet" data-action="restoreDefault">استعادة الاسم المقترح</button><button class="button button-primary" type="submit">حفظ التعديل</button></div>
