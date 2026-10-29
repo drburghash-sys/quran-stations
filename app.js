@@ -88,11 +88,12 @@
   function notify(s) {const el=$("#toast");el.textContent=s;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),3300);}
   function route(){
     const hash=decodeURIComponent(location.hash.slice(1));
+    if(hash==="mushaf" || hash.startsWith("mushaf/")) return {view:"mushaf",id:null};
     if(hash.startsWith("station/")) {
       const id=Number(hash.split("/")[1]);
       if(Number.isInteger(id)&&id>=1&&id<=TOTAL_STATIONS)return {view:"station",id};
     }
-    return {view:["home","stations","reviews","settings"].includes(hash)?hash:"home",id:null};
+    return {view:["home","stations","reviews","settings","mushaf"].includes(hash)?hash:"home",id:null};
   }
   function go(view,id) {const h=view==="station"?"station/"+id:view;if(location.hash==="#"+h)render();else location.hash=h;window.scrollTo(0,0);}
   function heroContent() {
@@ -153,7 +154,7 @@
     const steps=[["0","لم أبدأ"],["1","حفظت"],["2","سمّعت"],["3","أتقنت"]].map((it)=>'<button type="button" data-action="status:'+id+':'+it[0]+'" aria-pressed="'+(e.status===Number(it[0])?"true":"false")+'" class="step '+(e.status===Number(it[0])?"active":"")+'">'+it[1]+'</button>').join("");
     const revHTML=e.status===3?'<div class="list-row"><div><strong>المراجعة القادمة: '+dateLabel(rev.due)+'</strong><span class="small subtle">'+rev.next+' · أُنجز '+arabicNum(rev.count)+' مراجعات</span></div>'+button("تمت المراجعة","review:"+id,"button-primary")+'</div>':'<p class="small subtle">سيتفعل جدول مراجعة بعد يوم ثم أسبوع ثم شهر عندما تسجل «أتقنت».</p>';
     return '<div class="page-heading"><div class="button-row">'+button("← فهرس المحطات","openStations","button-outline")+'<span class="chip">المحطة '+arabicNum(id)+' / ٨٧</span></div></div>'+
-      '<div class="grid-2"><div class="stack"><div class="card"><div class="detail-head"><div><div class="kicker">المحطة '+arabicNum(id)+' · اليوم '+arabicNum(id)+' من الخطة</div><h2>'+esc(nameOf(id))+'</h2><span class="subtle">'+rangeLabel(id)+' · '+arabicNum(pageCount(id))+' '+(pageCount(id)===2?"صفحتان":"صفحات")+'</span></div><div class="station-number">'+arabicNum(id)+'</div></div><div class="button-row" style="margin-top:18px">'+button("تعديل الاسم وسبب التسمية","edit:"+id,"button-quiet")+'<a class="button button-outline" href="'+external+'" target="_blank" rel="noopener noreferrer">فتح أول صفحة ↗</a><a class="button button-outline" href="'+endExternal+'" target="_blank" rel="noopener noreferrer">آخر صفحة ↗</a></div><p class="hint" style="margin:13px 0 0">فتح المصحف عبر Quran.com يحتاج إلى اتصال بالإنترنت. سجلات الحفظ تعمل محليًا دون إنترنت.</p></div>'+
+      '<div class="grid-2"><div class="stack"><div class="card"><div class="detail-head"><div><div class="kicker">المحطة '+arabicNum(id)+' · اليوم '+arabicNum(id)+' من الخطة</div><h2>'+esc(nameOf(id))+'</h2><span class="subtle">'+rangeLabel(id)+' · '+arabicNum(pageCount(id))+' '+(pageCount(id)===2?"صفحتان":"صفحات")+'</span></div><div class="station-number">'+arabicNum(id)+'</div></div><div class="button-row" style="margin-top:18px">'+button("فتح صفحات المحطة","readStation:"+id,"button-primary")+button("تعديل الاسم وسبب التسمية","edit:"+id,"button-quiet")+'<a class="button button-outline" href="'+external+'" target="_blank" rel="noopener noreferrer">فتح أول صفحة ↗</a><a class="button button-outline" href="'+endExternal+'" target="_blank" rel="noopener noreferrer">آخر صفحة ↗</a></div><p class="hint" style="margin:13px 0 0">فتح المصحف عبر Quran.com يحتاج إلى اتصال بالإنترنت. سجلات الحفظ تعمل محليًا دون إنترنت.</p></div>'+
       '<div class="card"><h2 class="section-title">تقييم المحطة</h2><label class="check-row"><input type="checkbox" data-read="'+id+'" '+(e.read?"checked":"")+'> قرأت صفحات المحطة</label><div class="divider"></div><div class="label" style="margin-bottom:10px">مرحلة الحفظ والتسميع والإتقان</div><div class="step-grid">'+steps+'</div><p class="hint" style="margin:13px 0 0">اختر المرحلة التي أنجزتها فعليًا؛ يمكن تعديلها لاحقًا دون فقد ملاحظاتك.</p></div></div>'+
       '<div class="stack"><div class="card"><h2 class="section-title">مفتاح التذكر والتدبر</h2>'+
       '<div class="detail-text question"><div class="label">سؤال تدبر يساعد على الحفظ</div><p>'+esc(questionOf(id) || "سؤال التدبر معطّل لهذه المحطة. يمكنك إضافته من زر تخصيص المحطة.")+'</p>'+
@@ -185,7 +186,8 @@
   }
   function render(){
     const r=route();
-    app.innerHTML=r.view==="home"?home():r.view==="stations"?stations():r.view==="station"?station(r.id):r.view==="reviews"?reviews():settings();
+    app.innerHTML=r.view==="home"?home():r.view==="stations"?stations():r.view==="station"?station(r.id):r.view==="reviews"?reviews():r.view==="mushaf"?window.QuranStationsReader.view():settings();
+    if(r.view==="mushaf")window.QuranStationsReader.mount();
     document.documentElement.dataset.theme=data.theme;
     const themeButton=$("#themeButton");themeButton.textContent=data.theme==="dark"?"☼":"☾";
     document.querySelectorAll(".nav-button").forEach(b=>b.classList.toggle("active",b.dataset.view === (r.view==="station"?"stations":r.view)));
@@ -239,7 +241,7 @@
       if(!candidate||candidate.version!==1||!candidate.entries||!candidate.custom)throw Error("تنسيق غير مطابق");
       const parsed=cleanData(candidate);
       if(!confirm("سيتم استبدال بيانات هذا المتصفح بالبيانات المستوردة. هل تريد المتابعة؟"))return;
-      data=parsed;save();go("home");render();notify("استُعيدت النسخة الاحتياطية بنجاح.");
+      data=parsed;save();if(candidate.reader)window.QuranStationsReader.restore(candidate.reader);go("home");render();notify("استُعيدت المحطات وعلامات المصحف والمتشابهات إن وجدت في النسخة.");
     }catch(e){notify("فشل الاستيراد: ملف غير صالح أو غير متوافق.");}
     finally {const fileInput=$("#backupFile");if(fileInput)fileInput.value="";}
   }
@@ -251,10 +253,11 @@
     if(action==="start"){if(data.startOn&&!confirm("هل تريد إعادة بداية الخطة إلى اليوم؟"))return;data.startOn=isoToday();save();render();notify("بدأت الخطة من اليوم.");return;}
     if(action==="openStations"){go("stations");return;}
     if(action==="openReviews"){go("reviews");return;}
+    if(action.startsWith("readStation:")){window.QuranStationsReader.openFromStation(Number(action.split(":")[1]));return;}
     if(action==="print"){window.print();return;}
     if(action==="closeEditor"){closeEditor();return;}
     if(action==="restoreDefault"){$("#stationName").value=NAMES[editingId-1];$("#stationQuestion").value=defaultQuestion(editingId);$("#stationReason").value="";return;}
-    if(action==="export"){download("quran-stations-backup-"+isoToday()+".json",JSON.stringify(data,null,2),"application/json;charset=utf-8");notify("تم تنزيل النسخة الاحتياطية.");return;}
+    if(action==="export"){download("quran-stations-backup-"+isoToday()+".json",JSON.stringify({...data,reader:window.QuranStationsReader.backup()},null,2),"application/json;charset=utf-8");notify("تم تنزيل النسخة الاحتياطية مع علامات المصحف والمتشابهات.");return;}
     if(action==="calendar"){calendar();return;}
     if(action==="saveTime"){const time=$("#calendarTime").value;if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))return notify("الوقت غير صالح.");data.calendarTime=time;save();notify("تم تحديث وقت التقويم.");return;}
     if(action==="reset"){
