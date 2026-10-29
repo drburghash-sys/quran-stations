@@ -106,15 +106,17 @@ window.QuranStationsReader = (() => {
   function next(){pageJump(Math.min(604,state.page+(state.mode==="spread"?2:1)));}
   function prev(){pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));}
   function view(){
+    const deep=location.hash.match(/^#mushaf\/(\d{1,3})$/);
+    if(deep){state.page=clamp(Number(deep[1]));if(state.mode==="spread")state.page=spreadStart(state.page);save();}
     const pages=pageNumbers(),isDouble=state.mode==="spread";
     return '<div class="page-heading reader-heading"><p class="kicker">مصحف المدينة · برواية حفص عن عاصم</p><h1>مصحفي داخل المحطات</h1><p>صفحاته بخط المصحف، والعلامات الشفافة والمتشابهات محفوظة هنا، دون تغيير حالة حفظ محطاتك.</p></div>'+
     '<div class="reader-toolbar card flat"><div class="reader-tools">'+
       '<div class="reader-modes" role="group" aria-label="طريقة عرض المصحف"><button class="reader-mode '+(!isDouble?'active':'')+'" type="button" data-reader="mode:single">صفحة واحدة</button><button class="reader-mode '+(isDouble?'active':'')+'" type="button" data-reader="mode:spread">صفحتان متقابلتان</button></div>'+
       '<div class="reader-jump"><label for="readerPage">الصفحة</label><input id="readerPage" type="number" inputmode="numeric" min="1" max="604" value="'+state.page+'"><button type="button" class="button button-primary" data-reader="jump">انتقال</button></div>'+
       '<button type="button" class="button button-outline" data-reader="station">محطة هذه الصفحة</button></div>'+
-      '<div class="reader-nav-row"><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">←</span></button>'+
+      '<div class="reader-nav-row"><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">→</span></button>'+
       '<div class="reader-counter" id="readerCounter">الصفحة '+pages.map(arabic).join("–")+' من ٦٠٤</div>'+
-      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">→</span> التالية</button></div>'+
+      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">←</span> التالية</button></div>'+
       '<div class="reader-colors"><strong>العلامات الشفافة:</strong>'+
       [['',"اختيار آية"],["yellow","أصفر"],["green","أخضر"],["blue","أزرق"],["pink","وردي"],["erase","محو"]].map(([v,label])=>'<button type="button" class="reader-color '+(state.color===v?'active':'')+' '+(v||'normal')+'" data-reader="color:'+v+'" aria-pressed="'+(state.color===v)+'">'+label+'</button>').join("")+
       '<button type="button" class="button button-quiet reader-bookmark" data-reader="bookmark">☆ حفظ موضع القراءة</button></div>'+
@@ -243,6 +245,7 @@ window.QuranStationsReader = (() => {
     downloading=false;if(btn)btn.disabled=false;if(stop)stop.hidden=true;
   }
   function marksClick(word){
+    if(!word.classList.contains("reader-clickable"))return;
     const id=word.dataset.wordId,verse=word.dataset.verse,kind=state.color;
     if(kind){
       if(kind==="erase"||state.marks[id]===kind){delete state.marks[id];word.removeAttribute("data-mark");}
@@ -268,7 +271,7 @@ window.QuranStationsReader = (() => {
     if(action==="bookmark"){if(!state.bookmarks.includes(state.page))state.bookmarks.push(state.page);save();notify("تم حفظ موضع القراءة.");return;}
     if(action==="download")return downloadAll();
     if(action==="stop"){cancelDownload=true;return;}
-    if(action.startsWith("mode:")){state.mode=validMode(action.split(":")[1]);state.page=state.mode==="spread"?spreadStart(state.page):state.page;save();location.hash="mushaf/"+state.page;if($("#readerBook")){const app=$("#app");if(app)reroute();}return;}
+    if(action.startsWith("mode:")){const oldHash=location.hash;state.mode=validMode(action.split(":")[1]);state.page=state.mode==="spread"?spreadStart(state.page):state.page;save();location.hash="mushaf/"+state.page;if(oldHash===location.hash)reroute();return;}
     if(action.startsWith("color:")){
       state.color=action.slice(6);save();
       document.querySelectorAll(".reader-color").forEach(b=>{const active=b.dataset.reader==="color:"+state.color;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
@@ -280,7 +283,7 @@ window.QuranStationsReader = (() => {
     if(action.startsWith("deleteSimilar:")){const i=Number(action.split(":")[1]);if(!Number.isInteger(i)||!state.similars[i])return;if(!confirm("حذف هذه المقارنة فقط؟"))return;state.similars.splice(i,1);save();const box=$("#readerSimilarSaved");if(box)box.innerHTML=savedHTML();return;}
   }
   function reroute(){// Trigger the main app's own hashchange route if the hash already changed.
-    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    window.dispatchEvent(new Event("hashchange"));
   }
   let startTouch=null;
   document.addEventListener("touchstart",e=>{
