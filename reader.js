@@ -29,7 +29,7 @@ window.QuranStationsReader = (() => {
   };
   let state=clean((()=>{try{return JSON.parse(localStorage.getItem(KEY));}catch{return null}})());
   const memo=new Map(),pending=new Map(),fontPromises=new Map();
-  let currentToken=0,selected=null,shown=new Map(),matches=[],downloading=false,cancelDownload=false;
+  let currentToken=0,selected=null,shown=new Map(),matches=[],downloading=false,cancelDownload=false,turnDirection="";
   const notify=s=>{const box=$("#toast");if(box){box.textContent=s;box.classList.add("show");setTimeout(()=>box.classList.remove("show"),2800);}};
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{notify("تعذّر حفظ علامات المصحف؛ صدّر نسخة احتياطية.");}}
   const backup=()=>JSON.parse(JSON.stringify(state));
@@ -103,8 +103,8 @@ window.QuranStationsReader = (() => {
   function spreadStart(n){const p=clamp(n);return p%2===0?p-1:p;}
   const stationOf=n=>Math.min(87,Math.floor((n-1)/7)+1);
   function pageJump(n){n=clamp(n);if(state.mode==="spread")n=spreadStart(n);if(location.hash==="#mushaf/"+n){state.page=n;save();mount();}else location.hash="mushaf/"+n;window.scrollTo({top:0,behavior:"instant"});}
-  function next(){pageJump(Math.min(604,state.page+(state.mode==="spread"?2:1)));}
-  function prev(){pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));}
+  function next(){turnDirection="forward";pageJump(Math.min(604,state.page+(state.mode==="spread"?2:1)));}
+  function prev(){turnDirection="back";pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));}
   function view(){
     const deep=location.hash.match(/^#mushaf\/(\d{1,3})$/);
     if(deep){state.page=clamp(Number(deep[1]));if(state.mode==="spread")state.page=spreadStart(state.page);save();}
@@ -139,7 +139,7 @@ window.QuranStationsReader = (() => {
   }
   function savedHTML(){
     if(!state.similars.length)return '<p class="hint">اختر آية داخل المصحف ثم اضغط «البحث عن متشابهاتها» ثم «حفظ المقارنة». ستظهر المقارنات هنا.</p>';
-    return state.similars.slice(0,40).map((x,i)=>'<div class="reader-saved-item"><div><b>'+esc(x.first)+' ↔ '+esc(x.second)+'</b><p>'+esc(x.text)+'<span class="reader-vs"> ↔ </span>'+esc(x.other)+'</p>'+(x.note?'<p class="hint">'+esc(x.note)+'</p>':'')+'</div><div class="button-row"><button class="button button-outline" data-reader="savedPage:'+i+'">فتح</button><button class="button button-danger" data-reader="deleteSimilar:'+i+'">حذف</button></div></div>').join("");
+    return state.similars.slice(0,40).map((x,i)=>'<div class="reader-saved-item"><div><b>'+esc(x.first)+' ↔ '+esc(x.second)+'</b><p>'+esc(x.text)+'<span class="reader-vs"> ↔ </span>'+esc(x.other)+'</p>'+(x.note?'<p class="hint">'+esc(x.note)+'</p>':'')+'</div><div class="button-row"><button class="button button-outline" data-reader="savedPage:'+i+'">فتح</button><button class="button button-danger" data-reader="editSimilar:'+i+'">ملاحظة</button><button class="button button-danger" data-reader="deleteSimilar:'+i+'">حذف</button></div></div>').join("");
   }
   function wordMarkup(w,p,li,wi){
     const id=p+":"+li+":"+wi;
@@ -164,6 +164,8 @@ window.QuranStationsReader = (() => {
       if(token!==currentToken||!$("#readerBook"))return;
       data.forEach((d,i)=>shown.set(pages[i],d));
       book.innerHTML=data.map((d,i)=>sheetMarkup(pages[i],d)).join("");
+      book.classList.remove("reader-turn-forward","reader-turn-back");
+      if(turnDirection)book.classList.add(turnDirection==="forward"?"reader-turn-forward":"reader-turn-back");turnDirection="";
       await document.fonts.ready;
       if(token!==currentToken||!$("#readerBook"))return;
       fitLines();
@@ -290,6 +292,7 @@ window.QuranStationsReader = (() => {
     if(action.startsWith("matchPage:")){const m=matches[Number(action.split(":")[1])];if(m)pageJump(m.page);return;}
     if(action.startsWith("saveSimilar:"))return saveSimilar(Number(action.split(":")[1]));
     if(action.startsWith("savedPage:")){const m=state.similars[Number(action.split(":")[1])];if(m)pageJump(m.secondPage);return;}
+    if(action.startsWith("editSimilar:")){const i=Number(action.split(":")[1]),m=state.similars[i];if(!m)return;const note=prompt("ملاحظة تفرّق بها بين الموضعين المتشابهين:",m.note);if(note===null)return;m.note=note.trim().slice(0,400);save();const box=$("#readerSimilarSaved");if(box)box.innerHTML=savedHTML();return;}
     if(action.startsWith("deleteSimilar:")){const i=Number(action.split(":")[1]);if(!Number.isInteger(i)||!state.similars[i])return;if(!confirm("حذف هذه المقارنة فقط؟"))return;state.similars.splice(i,1);save();const box=$("#readerSimilarSaved");if(box)box.innerHTML=savedHTML();return;}
   }
   function reroute(){// Trigger the main app's own hashchange route if the hash already changed.
