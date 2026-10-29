@@ -1,0 +1,67 @@
+/* Independent Madinah Mushaf reader. The Arabic book runs from RIGHT to LEFT. */
+.reader-heading{margin-bottom:15px}
+.reader-toolbar{margin-bottom:16px}
+.reader-toolbar.card{padding:15px}
+.reader-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.reader-modes{display:flex;align-items:center;gap:4px;background:var(--surface2);border-radius:13px;padding:4px}
+.reader-mode{border:0;background:transparent;color:var(--muted);padding:9px 13px;border-radius:10px;font-size:12px;font-weight:800}
+.reader-mode.active{background:var(--surface);color:var(--primary2);box-shadow:0 3px 12px rgba(0,0,0,.07)}
+.reader-jump{display:flex;align-items:center;gap:8px}.reader-jump label{font-size:13px;color:var(--muted);font-weight:700}
+.reader-jump input{max-width:83px!important;min-height:41px;padding:8px!important;text-align:center;direction:ltr}
+.reader-nav-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px}
+.reader-counter{font-size:14px;font-weight:900;color:var(--ink);text-align:center}
+.reader-colors{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.reader-colors strong{font-size:12px;flex-basis:100%;color:var(--muted)}
+.reader-color{border:1px solid var(--line);border-radius:11px;font-size:11px;color:var(--ink);background:var(--surface);padding:8px 12px;font-weight:800}
+.reader-color.active{border-color:var(--gold);box-shadow:0 0 0 2px rgba(174,136,74,.24)}
+.reader-color.yellow{background:rgba(255,209,60,.28)}.reader-color.green{background:rgba(92,197,117,.27)}.reader-color.blue{background:rgba(69,159,254,.25)}.reader-color.pink{background:rgba(252,105,150,.23)}
+.reader-note{font-size:12px;color:var(--muted);padding-top:11px}
+.reader-book{direction:rtl;display:grid;gap:5px;align-items:start;margin:0 auto 20px;border-radius:20px;background:#e2d7ba;padding:12px;box-shadow:0 12px 44px rgba(56,51,32,.14);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.reader-book.reader-single{grid-template-columns:minmax(0,1fr);max-width:610px}
+.reader-book.reader-spread{grid-template-columns:repeat(2,minmax(0,1fr));max-width:1010px}
+.reader-sheet{background:#fffcf2;color:#261b12;border:2px solid #cab48b;border-radius:8px;overflow:hidden;box-shadow:inset 0 0 0 5px #f7edd6,inset 0 0 0 8px #dfcaa1;position:relative;aspect-ratio:0.705;min-width:0;padding:14px 16px 12px;display:flex;flex-direction:column;justify-content:space-between;direction:rtl}
+.reader-page-label{text-align:center;color:#775625;font-size:12px;font-weight:800;line-height:1.4;min-height:21px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.reader-lines{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-around;padding:4px 0}
+.reader-line{display:flex;align-items:center;justify-content:center;direction:rtl;white-space:nowrap;overflow:visible;min-width:0;flex:1;min-height:0}
+.reader-line-inner{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;direction:rtl;white-space:nowrap;transform-origin:center center;will-change:transform}
+.reader-word{display:inline-block;font-size:26px;line-height:1.25;white-space:nowrap;padding:0 1px;border-radius:4px;cursor:pointer}
+.reader-surah{font-size:29px;line-height:1.1;white-space:nowrap}
+.reader-bismillah{font-size:28px;line-height:1.1}
+.reader-quarter{font-size:27px}
+.reader-clickable.reader-selected{outline:2px solid #ab833b;outline-offset:1px}
+.reader-clickable[data-mark="yellow"]{background:rgba(255,199,3,.39)}
+.reader-clickable[data-mark="green"]{background:rgba(46,181,82,.33)}
+.reader-clickable[data-mark="blue"]{background:rgba(48,145,251,.27)}
+.reader-clickable[data-mark="pink"]{background:rgba(242,69,119,.28)}
+.reader-page-footer{text-align:center;font-size:12px;font-weight:800;color:#775625;line-height:1.2;min-height:17px}
+.reader-spread .reader-sheet:first-of-type{border-radius:3px 14px 14px 3px;border-right:3px solid #baa77a}
+.reader-spread .reader-sheet:last-of-type{border-radius:14px 3px 3px 14px;border-left:3px solid #baa77a}
+.reader-loading{text-align:center;padding:65px 20px;grid-column:1/-1;color:#4a3927;font-size:14px;background:#fffaf0;border-radius:10px}
+.reader-error{color:#8c312e}
+.reader-selection,.reader-similar,.reader-offline{margin:14px 0}
+.reader-selection[hidden]{display:none!important}
+.reader-verse-text{font-family:Amiri,serif;font-size:24px;line-height:2.2;text-align:right;color:var(--ink);padding:13px;background:var(--surface2);border-radius:13px}
+.reader-vs{color:var(--gold);font-weight:900}
+.reader-match,.reader-saved-item{border-bottom:1px solid var(--line);padding:12px 0}
+.reader-match:last-child,.reader-saved-item:last-child{border-bottom:0}
+.reader-match b{font-size:13px;color:var(--primary2)}
+.reader-match p,.reader-saved-item p{font-size:14px;margin:7px 0}
+.reader-saved-item{display:flex;align-items:start;justify-content:space-between;gap:14px}
+.reader-saved-item .button{padding:7px 10px;min-height:35px}
+.reader-credits{border-top:1px solid var(--line);padding-top:12px;margin-top:13px;color:var(--muted);font-size:11px}
+@media(max-width:760px){
+ .reader-tools{justify-content:center}.reader-mode{font-size:11px;padding:8px 10px}
+ .reader-jump{justify-content:center}
+ .reader-nav-row .button{padding:8px 9px;font-size:11px;min-height:37px}
+ .reader-counter{font-size:12px}
+ .reader-book{padding:7px;gap:3px;border-radius:12px}
+ .reader-sheet{padding:10px 10px 7px;box-shadow:inset 0 0 0 3px #f4e7d0,inset 0 0 0 5px #dfcaa1}
+ .reader-spread .reader-sheet{padding:5px 4px 4px}
+ .reader-spread .reader-page-label,.reader-spread .reader-page-footer{font-size:9px;min-height:13px}
+ .reader-spread .reader-word{font-size:22px;padding:0}
+ .reader-spread .reader-surah,.reader-spread .reader-bismillah{font-size:23px}
+ .reader-word{font-size:24px}.reader-surah,.reader-bismillah{font-size:25px}
+ .reader-saved-item{display:block}
+}
+@media(max-width:380px){.reader-spread .reader-sheet{padding:3px 2px}.reader-spread .reader-page-label{font-size:8px}}
+@media print{.reader-toolbar,.reader-offline,.reader-selection,.reader-similar{display:none!important}.reader-book{box-shadow:none;background:#fff}}
