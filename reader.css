@@ -70,3 +70,11 @@
 .reader-bookmarks{border-top:1px dashed var(--line);margin-top:10px;padding-top:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .reader-bookmark-link{background:var(--surface2);border:1px solid var(--line);color:var(--primary2);font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px}
 .reader-bookmark-link:last-child{color:var(--danger);background:transparent}
+
+
+@media(prefers-reduced-motion:no-preference){
+  .reader-turn-forward .reader-sheet{animation:quran-page-from-right .24s ease-out both;transform-origin:right center}
+  .reader-turn-back .reader-sheet{animation:quran-page-from-left .24s ease-out both;transform-origin:left center}
+  @keyframes quran-page-from-right{from{opacity:.78;transform:perspective(1400px)rotateY(-5deg) translateX(14px)}to{opacity:1;transform:perspective(1400px)rotateY(0) translateX(0)}}
+  @keyframes quran-page-from-left{from{opacity:.78;transform:perspective(1400px)rotateY(5deg) translateX(-14px)}to{opacity:1;transform:perspective(1400px)rotateY(0) translateX(0)}}
+}
