@@ -186,6 +186,7 @@
   }
   function render(){
     const r=route();
+    document.documentElement.classList.toggle("reader-active",r.view==="mushaf");
     app.innerHTML=r.view==="home"?home():r.view==="stations"?stations():r.view==="station"?station(r.id):r.view==="reviews"?reviews():r.view==="mushaf"?window.QuranStationsReader.view():settings();
     if(r.view==="mushaf")window.QuranStationsReader.mount();
     document.documentElement.dataset.theme=data.theme;
