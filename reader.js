@@ -109,26 +109,28 @@ window.QuranStationsReader = (() => {
     const deep=location.hash.match(/^#mushaf\/(\d{1,3})$/);
     if(deep){state.page=clamp(Number(deep[1]));if(state.mode==="spread")state.page=spreadStart(state.page);save();}
     const pages=pageNumbers(),isDouble=state.mode==="spread";
-    return '<div class="page-heading reader-heading"><p class="kicker">مصحف المدينة · برواية حفص عن عاصم</p><h1>مصحفي داخل المحطات</h1><p>صفحاته بخط المصحف، والعلامات الشفافة والمتشابهات محفوظة هنا، دون تغيير حالة حفظ محطاتك.</p></div>'+
-    '<div class="reader-toolbar card flat"><div class="reader-tools">'+
+    return '<div class="reader-screen" id="readerScreen">'+
+      '<div class="reader-toolbar card flat">'+
+      '<div class="reader-nav-row"><button class="reader-action reader-exit" type="button" data-reader="exit" title="الخروج من المصحف" aria-label="الخروج إلى المحطات">↩</button><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">→</span></button>'+
+      '<div class="reader-counter" id="readerCounter">الصفحة '+pages.map(arabic).join("–")+' من ٦٠٤</div>'+
+      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">←</span> التالية</button><button class="reader-action reader-toggle" type="button" data-reader="toolsToggle" id="readerToolsToggle" aria-label="إظهار أدوات المصحف" aria-expanded="false">☷</button></div>'+
+      '<div class="reader-toolbox" id="readerToolbox" hidden><div class="reader-tools">'+
       '<div class="reader-modes" role="group" aria-label="طريقة عرض المصحف"><button class="reader-mode '+(!isDouble?'active':'')+'" type="button" data-reader="mode:single">صفحة واحدة</button><button class="reader-mode '+(isDouble?'active':'')+'" type="button" data-reader="mode:spread">صفحتان متقابلتان</button></div>'+
       '<div class="reader-jump"><label for="readerPage">الصفحة</label><input id="readerPage" type="number" inputmode="numeric" min="1" max="604" value="'+state.page+'"><button type="button" class="button button-primary" data-reader="jump">انتقال</button></div>'+
-      '<button type="button" class="button button-outline" data-reader="station">محطة هذه الصفحة</button></div>'+
-      '<div class="reader-nav-row"><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">→</span></button>'+
-      '<div class="reader-counter" id="readerCounter">الصفحة '+pages.map(arabic).join("–")+' من ٦٠٤</div>'+
-      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">←</span> التالية</button></div>'+
+      '<button type="button" class="button button-outline" data-reader="station">محطة هذه الصفحة</button><button type="button" class="button button-quiet" data-reader="extras">المتشابهات وتنزيل الصفحات</button></div>'+
       '<div class="reader-colors"><strong>العلامات الشفافة:</strong>'+
       [['',"اختيار آية"],["yellow","أصفر"],["green","أخضر"],["blue","أزرق"],["pink","وردي"],["erase","محو"]].map(([v,label])=>'<button type="button" class="reader-color '+(state.color===v?'active':'')+' '+(v||'normal')+'" data-reader="color:'+v+'" aria-pressed="'+(state.color===v)+'">'+label+'</button>').join("")+
       '<button type="button" class="button button-quiet reader-bookmark" data-reader="bookmark">☆ حفظ موضع القراءة</button></div>'+
       '<div class="reader-note">للتقدم: <b>اسحب من اليمين إلى اليسار</b>، وللرجوع اسحب بالعكس. وفي وضع الصفحتين تظهر الصفحة الأقل رقمًا على <b>اليمين</b>.</div>'+ 
-      '<div class="reader-bookmarks" id="readerBookmarks">'+bookmarksHTML()+'</div></div>'+
+      '<div class="reader-bookmarks" id="readerBookmarks">'+bookmarksHTML()+'</div></div></div>'+
       '<div class="reader-book '+(isDouble?'reader-spread':'reader-single')+'" id="readerBook" aria-live="polite" aria-label="صفحات المصحف" dir="rtl"><div class="reader-loading">جارٍ تحميل الصفحات مع الخط الأصلي للمصحف...</div></div>'+
+      '</div><div class="reader-extras" id="readerExtras">'+
       '<section class="card reader-selection" id="readerSelection" hidden></section>'+
       '<section class="card reader-similar"><div class="title-row"><h2 class="section-title">المتشابهات والمواضع</h2><span class="chip">'+arabic(state.similars.length)+' محفوظة</span></div><div id="readerSimilarSaved">'+savedHTML()+'</div></section>'+
       '<section class="card reader-offline"><h2 class="section-title">القراءة دون إنترنت</h2><p class="hint">الصفحات التي فتحتها تُحفظ محليًا. يمكنك تنزيل صفحات المصحف والخطوط كاملة مسبقًا، ويستغرق ذلك حسب الاتصال. لا تتضمن العلامات أي تعديل على نص القرآن.</p><div class="button-row">'+
       '<button type="button" class="button button-outline" data-reader="download" id="readerDownload">تنزيل المصحف كاملًا للاستخدام دون إنترنت</button>'+
       '<button type="button" class="button button-danger" data-reader="stop" id="readerStop" hidden>إيقاف التنزيل</button></div><p class="hint" role="status" id="readerDownloadStatus"></p>'+
-      '<div class="reader-credits">مصدر صفحات المصحف وخط QCF4: <a href="https://github.com/MohamadHajjRabee/quran-qcf4" rel="noopener noreferrer" target="_blank">QCF4 / مصحف المدينة ١٤٤١هـ</a>؛ البيانات JSON بترخيص MIT، والخطوط للاستخدام في عرض القرآن. يحتاج التنزيل الأول إلى الإنترنت.</div></section>';
+      '<div class="reader-credits">مصدر صفحات المصحف وخط QCF4: <a href="https://github.com/MohamadHajjRabee/quran-qcf4" rel="noopener noreferrer" target="_blank">QCF4 / مصحف المدينة ١٤٤١هـ</a>؛ البيانات JSON بترخيص MIT، والخطوط للاستخدام في عرض القرآن. يحتاج التنزيل الأول إلى الإنترنت.</div></section>'+ '</div>';
   }
   function bookmarksHTML(){
     if(!state.bookmarks.length)return '<span class="hint">مواضع محفوظة: لا يوجد</span>';
