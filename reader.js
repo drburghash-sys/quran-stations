@@ -119,7 +119,14 @@ window.QuranStationsReader = (() => {
   }
   function pageJump(n){
     state.page=state.mode==="spread"?spreadStart(clamp(n)):clamp(n);
-    save();replacePageAddress();syncNav();mount();
+    save();
+    // Opening a page FROM a station must switch sections with hashchange;
+    // turning a page INSIDE the reader must not rerender the entire app.
+    if(!$("#readerBook")){
+      location.hash="mushaf/"+state.page;
+      return;
+    }
+    replacePageAddress();syncNav();mount();
   }
   function showTools(open){
     const panel=$("#readerToolbox"),toggle=$("#readerToolsToggle");
