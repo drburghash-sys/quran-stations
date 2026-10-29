@@ -120,7 +120,8 @@ window.QuranStationsReader = (() => {
       '<div class="reader-colors"><strong>العلامات الشفافة:</strong>'+
       [['',"اختيار آية"],["yellow","أصفر"],["green","أخضر"],["blue","أزرق"],["pink","وردي"],["erase","محو"]].map(([v,label])=>'<button type="button" class="reader-color '+(state.color===v?'active':'')+' '+(v||'normal')+'" data-reader="color:'+v+'" aria-pressed="'+(state.color===v)+'">'+label+'</button>').join("")+
       '<button type="button" class="button button-quiet reader-bookmark" data-reader="bookmark">☆ حفظ موضع القراءة</button></div>'+
-      '<div class="reader-note">للتقدم: <b>اسحب من اليمين إلى اليسار</b>، وللرجوع اسحب بالعكس. وفي وضع الصفحتين تظهر الصفحة الأقل رقمًا على <b>اليمين</b>.</div></div>'+
+      '<div class="reader-note">للتقدم: <b>اسحب من اليمين إلى اليسار</b>، وللرجوع اسحب بالعكس. وفي وضع الصفحتين تظهر الصفحة الأقل رقمًا على <b>اليمين</b>.</div>'+ 
+      '<div class="reader-bookmarks" id="readerBookmarks">'+bookmarksHTML()+'</div></div>'+
       '<div class="reader-book '+(isDouble?'reader-spread':'reader-single')+'" id="readerBook" aria-live="polite" aria-label="صفحات المصحف" dir="rtl"><div class="reader-loading">جارٍ تحميل الصفحات مع الخط الأصلي للمصحف...</div></div>'+
       '<section class="card reader-selection" id="readerSelection" hidden></section>'+
       '<section class="card reader-similar"><div class="title-row"><h2 class="section-title">المتشابهات والمواضع</h2><span class="chip">'+arabic(state.similars.length)+' محفوظة</span></div><div id="readerSimilarSaved">'+savedHTML()+'</div></section>'+
@@ -128,6 +129,13 @@ window.QuranStationsReader = (() => {
       '<button type="button" class="button button-outline" data-reader="download" id="readerDownload">تنزيل المصحف كاملًا للاستخدام دون إنترنت</button>'+
       '<button type="button" class="button button-danger" data-reader="stop" id="readerStop" hidden>إيقاف التنزيل</button></div><p class="hint" role="status" id="readerDownloadStatus"></p>'+
       '<div class="reader-credits">مصدر صفحات المصحف وخط QCF4: <a href="https://github.com/MohamadHajjRabee/quran-qcf4" rel="noopener noreferrer" target="_blank">QCF4 / مصحف المدينة ١٤٤١هـ</a>؛ البيانات JSON بترخيص MIT، والخطوط للاستخدام في عرض القرآن. يحتاج التنزيل الأول إلى الإنترنت.</div></section>';
+  }
+  function bookmarksHTML(){
+    if(!state.bookmarks.length)return '<span class="hint">مواضع محفوظة: لا يوجد</span>';
+    return '<span class="hint">مواضع محفوظة:</span> '+state.bookmarks.slice(-15).map(n=>
+      '<button type="button" class="reader-bookmark-link" data-reader="goBookmark:'+n+'">ص '+arabic(n)+'</button>'
+    ).join(" ")+
+      '<button type="button" class="reader-bookmark-link" data-reader="clearBookmarks">حذف المواضع</button>';
   }
   function savedHTML(){
     if(!state.similars.length)return '<p class="hint">اختر آية داخل المصحف ثم اضغط «البحث عن متشابهاتها» ثم «حفظ المقارنة». ستظهر المقارنات هنا.</p>';
@@ -268,7 +276,9 @@ window.QuranStationsReader = (() => {
     if(action==="closeSelection"){const p=$("#readerSelection");if(p)p.hidden=true;selected=null;return;}
     if(action==="copyVerse"){if(selected&&navigator.clipboard?.writeText)navigator.clipboard.writeText(selected.text).then(()=>notify("نُسخ نص الآية المعروضة.")).catch(()=>notify("تعذر النسخ."));return;}
     if(action==="searchSimilar")return findSimilar();
-    if(action==="bookmark"){if(!state.bookmarks.includes(state.page))state.bookmarks.push(state.page);save();notify("تم حفظ موضع القراءة.");return;}
+    if(action==="bookmark"){if(!state.bookmarks.includes(state.page))state.bookmarks.push(state.page);save();const area=$("#readerBookmarks");if(area)area.innerHTML=bookmarksHTML();notify("تم حفظ موضع القراءة.");return;}
+    if(action.startsWith("goBookmark:")){pageJump(Number(action.split(":")[1]));return;}
+    if(action==="clearBookmarks"){if(!confirm("حذف قائمة مواضع القراءة المحفوظة؟"))return;state.bookmarks=[];save();const area=$("#readerBookmarks");if(area)area.innerHTML=bookmarksHTML();return;}
     if(action==="download")return downloadAll();
     if(action==="stop"){cancelDownload=true;return;}
     if(action.startsWith("mode:")){const oldHash=location.hash;state.mode=validMode(action.split(":")[1]);state.page=state.mode==="spread"?spreadStart(state.page):state.page;save();location.hash="mushaf/"+state.page;if(oldHash===location.hash)reroute();return;}
