@@ -102,7 +102,30 @@ window.QuranStationsReader = (() => {
   }
   function spreadStart(n){const p=clamp(n);return p%2===0?p-1:p;}
   const stationOf=n=>Math.min(87,Math.floor((n-1)/7)+1);
-  function pageJump(n){n=clamp(n);if(state.mode==="spread")n=spreadStart(n);if(location.hash==="#mushaf/"+n){state.page=n;save();mount();}else location.hash="mushaf/"+n;window.scrollTo({top:0,behavior:"instant"});}
+  // Leaf turns change the reader only: do NOT replace #app, change scroll or trigger hashchange.
+  function replacePageAddress(){
+    const target="#mushaf/"+state.page;
+    if(location.hash===target)return;
+    try{window.history.replaceState(window.history.state,"",target);}
+    catch{location.hash=target;}
+  }
+  function syncNav(){
+    const pages=pageNumbers(),counter=$("#readerCounter"),input=$("#readerPage");
+    if(counter)counter.textContent="الصفحة "+pages.map(arabic).join("–")+" من ٦٠٤";
+    if(input)input.value=String(state.page);
+    const prevBtn=document.querySelector('[data-reader="prev"]'),nextBtn=document.querySelector('[data-reader="next"]');
+    if(prevBtn)prevBtn.disabled=state.page<=1;
+    if(nextBtn)nextBtn.disabled=Math.max(...pages)>=604;
+  }
+  function pageJump(n){
+    state.page=state.mode==="spread"?spreadStart(clamp(n)):clamp(n);
+    save();replacePageAddress();syncNav();mount();
+  }
+  function showTools(open){
+    const panel=$("#readerToolbox"),toggle=$("#readerToolsToggle");
+    if(panel)panel.hidden=!open;
+    if(toggle){toggle.setAttribute("aria-expanded",String(open));toggle.setAttribute("aria-label",open?"إخفاء أدوات المصحف":"إظهار أدوات المصحف");}
+  }
   function next(){turnDirection="forward";pageJump(Math.min(604,state.page+(state.mode==="spread"?2:1)));}
   function prev(){turnDirection="back";pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));}
   function view(){
@@ -272,6 +295,9 @@ window.QuranStationsReader = (() => {
     const btn=e.target.closest("[data-reader]");if(!btn)return;
     const action=btn.dataset.reader;
     if(!$("#readerBook"))return;
+    if(action==="exit"){location.hash="stations";return;}
+    if(action==="toolsToggle"){const panel=$("#readerToolbox");showTools(panel?panel.hidden:false);return;}
+    if(action==="extras"){showTools(false);const extra=$("#readerExtras");if(extra&&extra.scrollIntoView)extra.scrollIntoView({behavior:"smooth",block:"start"});return;}
     if(action==="prev")return prev();
     if(action==="next")return next();
     if(action==="retry")return mount();
@@ -285,20 +311,25 @@ window.QuranStationsReader = (() => {
     if(action==="clearBookmarks"){if(!confirm("حذف قائمة مواضع القراءة المحفوظة؟"))return;state.bookmarks=[];save();const area=$("#readerBookmarks");if(area)area.innerHTML=bookmarksHTML();return;}
     if(action==="download")return downloadAll();
     if(action==="stop"){cancelDownload=true;return;}
-    if(action.startsWith("mode:")){const oldHash=location.hash;state.mode=validMode(action.split(":")[1]);state.page=state.mode==="spread"?spreadStart(state.page):state.page;save();location.hash="mushaf/"+state.page;if(oldHash===location.hash)reroute();return;}
+    if(action.startsWith("mode:")){
+      state.mode=validMode(action.split(":")[1]);
+      state.page=state.mode==="spread"?spreadStart(state.page):state.page;
+      save();replacePageAddress();
+      const book=$("#readerBook");
+      if(book){book.classList.toggle("reader-spread",state.mode==="spread");book.classList.toggle("reader-single",state.mode!=="spread");}
+      document.querySelectorAll(".reader-mode").forEach(btn=>btn.classList.toggle("active",btn.dataset.reader==="mode:"+state.mode));
+      showTools(false);syncNav();mount();return;
+    }
     if(action.startsWith("color:")){
       state.color=action.slice(6);save();
       document.querySelectorAll(".reader-color").forEach(b=>{const active=b.dataset.reader==="color:"+state.color;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));});
-      return;
+      showTools(false);return;
     }
     if(action.startsWith("matchPage:")){const m=matches[Number(action.split(":")[1])];if(m)pageJump(m.page);return;}
     if(action.startsWith("saveSimilar:"))return saveSimilar(Number(action.split(":")[1]));
     if(action.startsWith("savedPage:")){const m=state.similars[Number(action.split(":")[1])];if(m)pageJump(m.secondPage);return;}
     if(action.startsWith("editSimilar:")){const i=Number(action.split(":")[1]),m=state.similars[i];if(!m)return;const note=prompt("ملاحظة تفرّق بها بين الموضعين المتشابهين:",m.note);if(note===null)return;m.note=note.trim().slice(0,400);save();const box=$("#readerSimilarSaved");if(box)box.innerHTML=savedHTML();return;}
     if(action.startsWith("deleteSimilar:")){const i=Number(action.split(":")[1]);if(!Number.isInteger(i)||!state.similars[i])return;if(!confirm("حذف هذه المقارنة فقط؟"))return;state.similars.splice(i,1);save();const box=$("#readerSimilarSaved");if(box)box.innerHTML=savedHTML();return;}
-  }
-  function reroute(){// Trigger the main app's own hashchange route if the hash already changed.
-    window.dispatchEvent(new Event("hashchange"));
   }
   let startTouch=null;
   document.addEventListener("touchstart",e=>{
