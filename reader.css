@@ -65,3 +65,8 @@
 }
 @media(max-width:380px){.reader-spread .reader-sheet{padding:3px 2px}.reader-spread .reader-page-label{font-size:8px}}
 @media print{.reader-toolbar,.reader-offline,.reader-selection,.reader-similar{display:none!important}.reader-book{box-shadow:none;background:#fff}}
+
+
+.reader-bookmarks{border-top:1px dashed var(--line);margin-top:10px;padding-top:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.reader-bookmark-link{background:var(--surface2);border:1px solid var(--line);color:var(--primary2);font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px}
+.reader-bookmark-link:last-child{color:var(--danger);background:transparent}
