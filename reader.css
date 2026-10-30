@@ -136,3 +136,52 @@ html.reader-active #app{width:100%;min-height:0}
   .reader-turn-forward .reader-sheet,
   .reader-turn-back .reader-sheet{animation:none!important}
 }
+
+
+/* True RTL leaf motion. The new leaf comes from the RIGHT and travels LEFT.
+   The outgoing leaf moves toward the LEFT. Backward travel mirrors it.
+   These rules supersede the earlier subtle 14px transition. */
+.reader-screen .reader-book{position:relative;isolation:isolate;perspective:1400px}
+.reader-screen .reader-turn-overlay{
+  position:absolute;inset:0;z-index:4;display:grid;
+  grid-template-columns:inherit;grid-auto-rows:minmax(0,1fr);
+  gap:inherit;padding:inherit;direction:rtl;
+  background:#e2d7ba;pointer-events:none;overflow:hidden
+}
+.reader-screen .reader-turn-overlay .reader-sheet{
+  animation:none!important;transform:none;max-width:100%
+}
+@media(prefers-reduced-motion:no-preference){
+  .reader-screen .reader-turn-forward > .reader-sheet{
+    animation:reader-rtl-new-from-right 420ms cubic-bezier(.20,.68,.18,1) both;
+    transform-origin:right center
+  }
+  .reader-screen .reader-turn-forward > .reader-turn-overlay{
+    animation:reader-rtl-old-to-left 420ms cubic-bezier(.20,.68,.18,1) both;
+    transform-origin:left center
+  }
+  .reader-screen .reader-turn-back > .reader-sheet{
+    animation:reader-rtl-back-from-left 420ms cubic-bezier(.20,.68,.18,1) both;
+    transform-origin:left center
+  }
+  .reader-screen .reader-turn-back > .reader-turn-overlay{
+    animation:reader-rtl-back-to-right 420ms cubic-bezier(.20,.68,.18,1) both;
+    transform-origin:right center
+  }
+  @keyframes reader-rtl-new-from-right{
+    0%{opacity:.72;transform:translateX(44%) rotateY(-6deg)}
+    100%{opacity:1;transform:translateX(0) rotateY(0)}
+  }
+  @keyframes reader-rtl-old-to-left{
+    0%{opacity:1;transform:translateX(0) rotateY(0)}
+    100%{opacity:0;transform:translateX(-55%) rotateY(8deg)}
+  }
+  @keyframes reader-rtl-back-from-left{
+    0%{opacity:.72;transform:translateX(-44%) rotateY(6deg)}
+    100%{opacity:1;transform:translateX(0) rotateY(0)}
+  }
+  @keyframes reader-rtl-back-to-right{
+    0%{opacity:1;transform:translateX(0) rotateY(0)}
+    100%{opacity:0;transform:translateX(55%) rotateY(-8deg)}
+  }
+}
