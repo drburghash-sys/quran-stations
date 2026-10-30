@@ -129,9 +129,10 @@ html.reader-active #app{width:100%;min-height:0}
   .reader-turn-back .reader-sheet{animation:none!important}
 }
 
-/* Physical Arabic book turn: one opaque leaf hinged at the centre seam.
-   The right-hand leaf rotates around its LEFT edge toward the left page.
-   This replaces all previous horizontally translated translucent overlays. */
+/* Arabic mushaf physical opening order:
+   forward = LEFT leaf pivots around RIGHT edge into the right side.
+   backward = RIGHT leaf pivots around LEFT edge into the left side.
+   Quran pages remain ascending numerically from Al-Fatihah. */
 .reader-screen .reader-book {position:relative;isolation:isolate;perspective:1350px}
 .reader-screen .reader-flip-leaf {
   position:absolute;z-index:12;top:2px;bottom:2px;
@@ -139,17 +140,17 @@ html.reader-active #app{width:100%;min-height:0}
   transform-style:preserve-3d;will-change:transform;
 }
 .reader-screen .reader-book.reader-spread.reader-turn-forward > .reader-flip-leaf {
-  right:2px;left:auto;transform-origin:left center;
+  left:2px;right:auto;transform-origin:right center;
 }
 .reader-screen .reader-book.reader-spread.reader-turn-back > .reader-flip-leaf {
-  left:2px;right:auto;transform-origin:right center;
+  right:2px;left:auto;transform-origin:left center;
 }
 .reader-screen .reader-book.reader-single > .reader-flip-leaf {
   right:2px;left:2px;width:calc(100% - 4px);
   margin-inline:auto;
 }
-.reader-screen .reader-book.reader-single.reader-turn-forward > .reader-flip-leaf {transform-origin:left center}
-.reader-screen .reader-book.reader-single.reader-turn-back > .reader-flip-leaf {transform-origin:right center}
+.reader-screen .reader-book.reader-single.reader-turn-forward > .reader-flip-leaf {transform-origin:right center}
+.reader-screen .reader-book.reader-single.reader-turn-back > .reader-flip-leaf {transform-origin:left center}
 .reader-screen .reader-flip-front,
 .reader-screen .reader-flip-back {
   position:absolute;inset:0;
@@ -173,10 +174,10 @@ html.reader-active #app{width:100%;min-height:0}
 }
 @media(prefers-reduced-motion:no-preference){
   .reader-screen .reader-turn-forward > .reader-flip-leaf {
-    animation:reader-leaf-to-left 520ms ease-in-out both
+    animation:reader-leaf-to-right 520ms ease-in-out both
   }
   .reader-screen .reader-turn-back > .reader-flip-leaf {
-    animation:reader-leaf-to-right 520ms ease-in-out both
+    animation:reader-leaf-to-left 520ms ease-in-out both
   }
   @keyframes reader-leaf-to-left{
     0%{transform:rotateY(0)}
