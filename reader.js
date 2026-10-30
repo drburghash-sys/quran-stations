@@ -186,28 +186,49 @@ window.QuranStationsReader = (() => {
   }
   async function mount(){
     const book=$("#readerBook");if(!book)return;
-    const token=++currentToken,pages=pageNumbers();shown.clear();selected=null;const pane=$("#readerSelection");if(pane)pane.hidden=true;
-    book.innerHTML='<div class="reader-loading">جارٍ تحميل صفحات المصحف...</div>';
+    const token=++currentToken,pages=pageNumbers();
+    // Capture the visible leaves BEFORE replacing anything. Keeping them in place
+    // until the next pages are ready avoids a flash and makes direction unmistakable.
+    const direction=turnDirection;turnDirection="";
+    const oldLeaves=direction
+      ? Array.from(book.children).filter(el=>el.classList.contains("reader-sheet")).map(el=>el.cloneNode(true))
+      : [];
+    shown.clear();selected=null;
+    const pane=$("#readerSelection");if(pane)pane.hidden=true;
+    if(!oldLeaves.length)book.innerHTML='<div class="reader-loading">جارٍ تحميل صفحات المصحف...</div>';
     try{
       const data=await Promise.all(pages.map(getPage));
-      if(token!==currentToken||!$("#readerBook"))return;
+      if(token!==currentToken||$("#readerBook")!==book)return;
       const names=[...new Set(data.flatMap(x=>x.lines.flatMap(l=>l.words.map(w=>w.font))).filter(Boolean))];
       await Promise.all(names.map(loadFont));
-      if(token!==currentToken||!$("#readerBook"))return;
+      if(token!==currentToken||$("#readerBook")!==book)return;
       data.forEach((d,i)=>shown.set(pages[i],d));
-      book.innerHTML=data.map((d,i)=>sheetMarkup(pages[i],d)).join("");
       book.classList.remove("reader-turn-forward","reader-turn-back");
-      if(turnDirection)book.classList.add(turnDirection==="forward"?"reader-turn-forward":"reader-turn-back");turnDirection="";
+      book.innerHTML=data.map((d,i)=>sheetMarkup(pages[i],d)).join("");
       await document.fonts.ready;
-      if(token!==currentToken||!$("#readerBook"))return;
+      if(token!==currentToken||$("#readerBook")!==book)return;
       fitLines();
+      if(direction && oldLeaves.length && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches){
+        const overlay=document.createElement("div");
+        overlay.className="reader-turn-overlay";
+        overlay.setAttribute("aria-hidden","true");
+        oldLeaves.forEach(leaf=>overlay.appendChild(leaf));
+        book.appendChild(overlay);
+        // Next = new leaf enters from RIGHT, old leaf exits LEFT.
+        // Previous = the inverse. Both are explicitly tied to Arabic reading order.
+        book.classList.add(direction==="forward"?"reader-turn-forward":"reader-turn-back");
+        window.setTimeout(()=>{
+          overlay.remove();
+          book.classList.remove("reader-turn-forward","reader-turn-back");
+        },440);
+      }
     }catch(e){
-      if(token!==currentToken||!$("#readerBook"))return;
+      if(token!==currentToken||$("#readerBook")!==book)return;
       book.innerHTML='<div class="reader-loading reader-error"><b>تعذر عرض صفحة المصحف بدقة.</b><p>'+esc(e.message||"اتصل بالإنترنت وحاول مجددًا.")+'</p><button type="button" class="button button-outline" data-reader="retry">إعادة المحاولة</button><p class="hint">لن أستبدل نص المصحف بتخمين أو صفحات غير مطابقة.</p></div>';
     }
   }
   function fitLines(){
-    document.querySelectorAll("#readerBook .reader-line").forEach(row=>{
+    document.querySelectorAll("#readerBook > .reader-sheet .reader-line").forEach(row=>{
       const inner=row.querySelector(".reader-line-inner");if(!inner)return;
       inner.style.transform="none";
       const available=row.clientWidth-4,width=inner.scrollWidth,scale=Math.min(1,available/Math.max(1,width));
