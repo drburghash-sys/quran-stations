@@ -194,15 +194,16 @@ window.QuranStationsReader = (() => {
   async function mount(){
     const book=$("#readerBook");if(!book)return;
     const token=++currentToken,pages=pageNumbers();
-    // Capture the visible leaves BEFORE replacing anything. Keeping them in place
-    // until the next pages are ready avoids a flash and makes direction unmistakable.
+    // Use one opaque leaf revolving around the binding, not transparent
+    // copies of the entire book sliding horizontally.
     const direction=turnDirection;turnDirection="";
-    const oldLeaves=direction
-      ? Array.from(book.children).filter(el=>el.classList.contains("reader-sheet")).map(el=>el.cloneNode(true))
-      : [];
+    const visible=Array.from(book.children).filter(el=>el.classList.contains("reader-sheet"));
+    const turning=direction && visible.length
+      ? (direction==="forward"?visible[0]:visible[visible.length-1]).cloneNode(true)
+      : null;
     shown.clear();selected=null;
     const pane=$("#readerSelection");if(pane)pane.hidden=true;
-    if(!oldLeaves.length)book.innerHTML='<div class="reader-loading">جارٍ تحميل صفحات المصحف...</div>';
+    if(!turning)book.innerHTML='<div class="reader-loading">جارٍ تحميل صفحات المصحف...</div>';
     try{
       const data=await Promise.all(pages.map(getPage));
       if(token!==currentToken||$("#readerBook")!==book)return;
@@ -215,20 +216,26 @@ window.QuranStationsReader = (() => {
       await document.fonts.ready;
       if(token!==currentToken||$("#readerBook")!==book)return;
       fitLines();
-      if(direction && oldLeaves.length && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches){
-        const overlay=document.createElement("div");
-        overlay.className="reader-turn-overlay";
-        overlay.setAttribute("aria-hidden","true");
-        oldLeaves.forEach(leaf=>overlay.appendChild(leaf));
-        book.appendChild(overlay);
-        // Next = new leaf enters from RIGHT, old leaf exits LEFT.
-        // Previous = the inverse. Both are explicitly tied to Arabic reading order.
-        book.classList.add(direction==="forward"?"reader-turn-forward":"reader-turn-back");
+      if(direction && turning && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches){
+        const flip=document.createElement("div");
+        flip.className="reader-flip-leaf";
+        flip.setAttribute("aria-hidden","true");
+        const front=document.createElement("div");
+        front.className="reader-flip-front";
+        front.appendChild(turning);
+        const back=document.createElement("div");
+        back.className="reader-flip-back";
+        flip.appendChild(front);
+        flip.appendChild(back);
+        book.appendChild(flip);
+        // Arabic binding: the RIGHT leaf folds over its LEFT (spine) edge.
+        // Going back: the LEFT leaf folds over its RIGHT (spine) edge.
+        const animation=direction==="forward"?"reader-turn-forward":"reader-turn-back";
+        book.classList.add(animation);
         window.setTimeout(()=>{
-          if(overlay.parentNode!==book)return; // A newer turn already replaced this overlay.
-          overlay.remove();
-          book.classList.remove("reader-turn-forward","reader-turn-back");
-        },440);
+          if(flip.parentNode!==book)return;
+          flip.remove();book.classList.remove(animation);
+        },540);
       }
     }catch(e){
       if(token!==currentToken||$("#readerBook")!==book)return;
