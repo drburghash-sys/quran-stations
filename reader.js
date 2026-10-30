@@ -133,8 +133,15 @@ window.QuranStationsReader = (() => {
     if(panel)panel.hidden=!open;
     if(toggle){toggle.setAttribute("aria-expanded",String(open));toggle.setAttribute("aria-label",open?"إخفاء أدوات المصحف":"إظهار أدوات المصحف");}
   }
-  function next(){turnDirection="forward";pageJump(Math.min(604,state.page+(state.mode==="spread"?2:1)));}
-  function prev(){turnDirection="back";pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));}
+  function next(){
+    const target=state.mode==="spread"?state.page+2:state.page+1;
+    if(target>604)return;
+    turnDirection="forward";pageJump(target);
+  }
+  function prev(){
+    if(state.page<=1)return;
+    turnDirection="back";pageJump(Math.max(1,state.page-(state.mode==="spread"?2:1)));
+  }
   function view(){
     const deep=location.hash.match(/^#mushaf\/(\d{1,3})$/);
     if(deep){state.page=clamp(Number(deep[1]));if(state.mode==="spread")state.page=spreadStart(state.page);save();}
@@ -218,6 +225,7 @@ window.QuranStationsReader = (() => {
         // Previous = the inverse. Both are explicitly tied to Arabic reading order.
         book.classList.add(direction==="forward"?"reader-turn-forward":"reader-turn-back");
         window.setTimeout(()=>{
+          if(overlay.parentNode!==book)return; // A newer turn already replaced this overlay.
           overlay.remove();
           book.classList.remove("reader-turn-forward","reader-turn-back");
         },440);
