@@ -72,14 +72,6 @@
 .reader-bookmark-link:last-child{color:var(--danger);background:transparent}
 
 
-@media(prefers-reduced-motion:no-preference){
-  .reader-turn-forward .reader-sheet{animation:quran-page-from-right .24s ease-out both;transform-origin:right center}
-  .reader-turn-back .reader-sheet{animation:quran-page-from-left .24s ease-out both;transform-origin:left center}
-  @keyframes quran-page-from-right{from{opacity:.78;transform:perspective(1400px)rotateY(-5deg) translateX(14px)}to{opacity:1;transform:perspective(1400px)rotateY(0) translateX(0)}}
-  @keyframes quran-page-from-left{from{opacity:.78;transform:perspective(1400px)rotateY(5deg) translateX(-14px)}to{opacity:1;transform:perspective(1400px)rotateY(0) translateX(0)}}
-}
-
-
 /* Full-height Quran reading mode: keep the leaf anchored while turning pages. */
 html.reader-active,html.reader-active body{margin:0;overflow-x:hidden}
 html.reader-active .shell{max-width:none;width:100%;padding:0;min-height:0}
@@ -137,51 +129,66 @@ html.reader-active #app{width:100%;min-height:0}
   .reader-turn-back .reader-sheet{animation:none!important}
 }
 
-
-/* True RTL leaf motion. The new leaf comes from the RIGHT and travels LEFT.
-   The outgoing leaf moves toward the LEFT. Backward travel mirrors it.
-   These rules supersede the earlier subtle 14px transition. */
-.reader-screen .reader-book{position:relative;isolation:isolate;perspective:1400px}
-.reader-screen .reader-turn-overlay{
-  position:absolute;inset:0;z-index:4;display:grid;
-  grid-template-columns:inherit;grid-auto-rows:minmax(0,1fr);
-  gap:inherit;padding:inherit;direction:rtl;
-  background:#e2d7ba;pointer-events:none;overflow:hidden
+/* Physical Arabic book turn: one opaque leaf hinged at the centre seam.
+   The right-hand leaf rotates around its LEFT edge toward the left page.
+   This replaces all previous horizontally translated translucent overlays. */
+.reader-screen .reader-book {position:relative;isolation:isolate;perspective:1350px}
+.reader-screen .reader-flip-leaf {
+  position:absolute;z-index:12;top:2px;bottom:2px;
+  width:calc(50% - 3px);pointer-events:none;
+  transform-style:preserve-3d;will-change:transform;
 }
-.reader-screen .reader-turn-overlay .reader-sheet{
-  animation:none!important;transform:none;max-width:100%
+.reader-screen .reader-book.reader-spread.reader-turn-forward > .reader-flip-leaf {
+  right:2px;left:auto;transform-origin:left center;
+}
+.reader-screen .reader-book.reader-spread.reader-turn-back > .reader-flip-leaf {
+  left:2px;right:auto;transform-origin:right center;
+}
+.reader-screen .reader-book.reader-single > .reader-flip-leaf {
+  right:2px;left:2px;width:calc(100% - 4px);
+  margin-inline:auto;
+}
+.reader-screen .reader-book.reader-single.reader-turn-forward > .reader-flip-leaf {transform-origin:left center}
+.reader-screen .reader-book.reader-single.reader-turn-back > .reader-flip-leaf {transform-origin:right center}
+.reader-screen .reader-flip-front,
+.reader-screen .reader-flip-back {
+  position:absolute;inset:0;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  overflow:hidden;transform-style:preserve-3d
+}
+.reader-screen .reader-flip-front {transform:translateZ(1px)}
+.reader-screen .reader-flip-front .reader-sheet {
+  width:100%;height:100%;max-width:none!important;
+  animation:none!important;transform:none!important
+}
+.reader-screen .reader-flip-back {
+  transform:rotateY(180deg) translateZ(1px);
+  background:#fffcf2;border:2px solid #cbb995;
+  box-shadow:inset 0 0 0 5px #f4e8cd;
+}
+@media(min-width:800px) {
+ .reader-screen .reader-book.reader-single > .reader-flip-leaf {
+   width:min(calc(100% - 4px),calc((100dvh - 54px)*.75))
+ }
 }
 @media(prefers-reduced-motion:no-preference){
-  .reader-screen .reader-turn-forward > .reader-sheet{
-    animation:reader-rtl-new-from-right 420ms cubic-bezier(.20,.68,.18,1) both;
-    transform-origin:right center
+  .reader-screen .reader-turn-forward > .reader-flip-leaf {
+    animation:reader-leaf-to-left 520ms ease-in-out both
   }
-  .reader-screen .reader-turn-forward > .reader-turn-overlay{
-    animation:reader-rtl-old-to-left 420ms cubic-bezier(.20,.68,.18,1) both;
-    transform-origin:left center
+  .reader-screen .reader-turn-back > .reader-flip-leaf {
+    animation:reader-leaf-to-right 520ms ease-in-out both
   }
-  .reader-screen .reader-turn-back > .reader-sheet{
-    animation:reader-rtl-back-from-left 420ms cubic-bezier(.20,.68,.18,1) both;
-    transform-origin:left center
+  @keyframes reader-leaf-to-left{
+    0%{transform:rotateY(0)}
+    45%{transform:rotateY(-83deg)}
+    100%{transform:rotateY(-180deg)}
   }
-  .reader-screen .reader-turn-back > .reader-turn-overlay{
-    animation:reader-rtl-back-to-right 420ms cubic-bezier(.20,.68,.18,1) both;
-    transform-origin:right center
+  @keyframes reader-leaf-to-right{
+    0%{transform:rotateY(0)}
+    45%{transform:rotateY(83deg)}
+    100%{transform:rotateY(180deg)}
   }
-  @keyframes reader-rtl-new-from-right{
-    0%{opacity:.72;transform:translateX(44%) rotateY(-6deg)}
-    100%{opacity:1;transform:translateX(0) rotateY(0)}
-  }
-  @keyframes reader-rtl-old-to-left{
-    0%{opacity:1;transform:translateX(0) rotateY(0)}
-    100%{opacity:0;transform:translateX(-55%) rotateY(8deg)}
-  }
-  @keyframes reader-rtl-back-from-left{
-    0%{opacity:.72;transform:translateX(-44%) rotateY(6deg)}
-    100%{opacity:1;transform:translateX(0) rotateY(0)}
-  }
-  @keyframes reader-rtl-back-to-right{
-    0%{opacity:1;transform:translateX(0) rotateY(0)}
-    100%{opacity:0;transform:translateX(55%) rotateY(-8deg)}
-  }
+}
+@media(prefers-reduced-motion:reduce){
+ .reader-screen .reader-flip-leaf{display:none!important;animation:none!important}
 }
