@@ -1,5 +1,5 @@
 "use strict";
-const CACHE="quran-stations-cache-v4";
+const CACHE="quran-stations-cache-v5";
 const ASSETS=["./","./index.html","./style.css","./app.js","./themes.js","./reader.js","./reader.css","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
