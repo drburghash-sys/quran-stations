@@ -148,9 +148,9 @@ window.QuranStationsReader = (() => {
     const pages=pageNumbers(),isDouble=state.mode==="spread";
     return '<div class="reader-screen" id="readerScreen">'+
       '<div class="reader-toolbar card flat">'+
-      '<div class="reader-nav-row"><button class="reader-action reader-exit" type="button" data-reader="exit" title="الخروج من المصحف" aria-label="الخروج إلى المحطات">↩</button><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">→</span></button>'+
+      '<div class="reader-nav-row"><button class="reader-action reader-exit" type="button" data-reader="exit" title="الخروج من المصحف" aria-label="الخروج إلى المحطات">↩</button><button class="button button-outline" type="button" data-reader="prev" '+(state.page<=1?'disabled':'')+'>السابقة <span aria-hidden="true">←</span></button>'+
       '<div class="reader-counter" id="readerCounter">الصفحة '+pages.map(arabic).join("–")+' من ٦٠٤</div>'+
-      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">←</span> التالية</button><button class="reader-action reader-toggle" type="button" data-reader="toolsToggle" id="readerToolsToggle" aria-label="إظهار أدوات المصحف" aria-expanded="false">☷</button></div>'+
+      '<button class="button button-primary" type="button" data-reader="next" '+(Math.max(...pages)>=604?'disabled':'')+'><span aria-hidden="true">→</span> التالية</button><button class="reader-action reader-toggle" type="button" data-reader="toolsToggle" id="readerToolsToggle" aria-label="إظهار أدوات المصحف" aria-expanded="false">☷</button></div>'+
       '<div class="reader-toolbox" id="readerToolbox" hidden><div class="reader-tools">'+
       '<div class="reader-modes" role="group" aria-label="طريقة عرض المصحف"><button class="reader-mode '+(!isDouble?'active':'')+'" type="button" data-reader="mode:single">صفحة واحدة</button><button class="reader-mode '+(isDouble?'active':'')+'" type="button" data-reader="mode:spread">صفحتان متقابلتان</button></div>'+
       '<div class="reader-jump"><label for="readerPage">الصفحة</label><input id="readerPage" type="number" inputmode="numeric" min="1" max="604" value="'+state.page+'"><button type="button" class="button button-primary" data-reader="jump">انتقال</button></div>'+
@@ -158,7 +158,7 @@ window.QuranStationsReader = (() => {
       '<div class="reader-colors"><strong>العلامات الشفافة:</strong>'+
       [['',"اختيار آية"],["yellow","أصفر"],["green","أخضر"],["blue","أزرق"],["pink","وردي"],["erase","محو"]].map(([v,label])=>'<button type="button" class="reader-color '+(state.color===v?'active':'')+' '+(v||'normal')+'" data-reader="color:'+v+'" aria-pressed="'+(state.color===v)+'">'+label+'</button>').join("")+
       '<button type="button" class="button button-quiet reader-bookmark" data-reader="bookmark">☆ حفظ موضع القراءة</button></div>'+
-      '<div class="reader-note">للتقدم: <b>اسحب من اليمين إلى اليسار</b>، وللرجوع اسحب بالعكس. وفي وضع الصفحتين تظهر الصفحة الأقل رقمًا على <b>اليمين</b>.</div>'+ 
+      '<div class="reader-note">للتقدم: <b>اسحب من اليسار إلى اليمين</b> مثل تقليب المصحف الورقي، وللرجوع اسحب بالعكس. تبدأ الفاتحة بالصفحة ١، وتبقى الصفحة الأقل رقمًا على <b>اليمين</b> في وضع الصفحتين.</div>'+ 
       '<div class="reader-bookmarks" id="readerBookmarks">'+bookmarksHTML()+'</div></div></div>'+
       '<div class="reader-book '+(isDouble?'reader-spread':'reader-single')+'" id="readerBook" aria-live="polite" aria-label="صفحات المصحف" dir="rtl"><div class="reader-loading">جارٍ تحميل الصفحات مع الخط الأصلي للمصحف...</div></div>'+
       '</div><div class="reader-extras" id="readerExtras">'+
@@ -199,7 +199,7 @@ window.QuranStationsReader = (() => {
     const direction=turnDirection;turnDirection="";
     const visible=Array.from(book.children).filter(el=>el.classList.contains("reader-sheet"));
     const turning=direction && visible.length
-      ? (direction==="forward"?visible[0]:visible[visible.length-1]).cloneNode(true)
+      ? (direction==="forward"?visible[visible.length-1]:visible[0]).cloneNode(true)
       : null;
     shown.clear();selected=null;
     const pane=$("#readerSelection");if(pane)pane.hidden=true;
@@ -228,8 +228,8 @@ window.QuranStationsReader = (() => {
         flip.appendChild(front);
         flip.appendChild(back);
         book.appendChild(flip);
-        // Arabic binding: the RIGHT leaf folds over its LEFT (spine) edge.
-        // Going back: the LEFT leaf folds over its RIGHT (spine) edge.
+        // Physical Arabic mushaf: the LEFT leaf folds RIGHT when advancing.
+        // Going back, the RIGHT leaf folds LEFT. Never reverse page numbers.
         const animation=direction==="forward"?"reader-turn-forward":"reader-turn-back";
         book.classList.add(animation);
         window.setTimeout(()=>{
@@ -383,13 +383,13 @@ window.QuranStationsReader = (() => {
     if(!startTouch||!e.target.closest("#readerBook")){startTouch=null;return;}
     const dx=e.changedTouches[0].clientX-startTouch.x,dy=e.changedTouches[0].clientY-startTouch.y;
     startTouch=null;if(Math.abs(dx)<62||Math.abs(dx)<Math.abs(dy)*1.5)return;
-    // The reading direction is RTL: a swipe LEFT advances.
-    if(dx<0)next();else prev();
+    // A rightward swipe turns the Arabic book forward (LEFT leaf -> RIGHT).
+    if(dx>0)next();else prev();
   },{passive:true});
   window.addEventListener("keydown",e=>{
     if(!$("#readerBook")||/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||""))return;
-    if(e.key==="ArrowLeft"){e.preventDefault();next();}
-    if(e.key==="ArrowRight"){e.preventDefault();prev();}
+    if(e.key==="ArrowRight"){e.preventDefault();next();}
+    if(e.key==="ArrowLeft"){e.preventDefault();prev();}
   });
   window.addEventListener("resize",()=>{if($("#readerBook"))requestAnimationFrame(fitLines);});
   document.addEventListener("click",onClick);
